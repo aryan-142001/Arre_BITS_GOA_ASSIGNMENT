@@ -1,0 +1,46 @@
+//Server-side application:
+// /API to load all the group messages in a paginated manner:
+
+app.get('/api/group/:group_id/messages', (req, res) => {
+  const group_id = req.params.group_id;
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 20;
+
+  Message.find({ group_id: group_id })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .sort({ timestamp: -1 })
+    .exec((err, messages) => {
+      if (err) {
+        return res.status(500).send(err);
+      }
+      res.json(messages);
+    });
+});
+
+
+//API to create a message in the group:
+
+app.post('/api/group/:group_id/messages', (req, res) => {
+  const group_id = req.params.group_id;
+  const sender_id = req.body.sender_id;
+  const message_text = req.body.message_text;
+  const media = req.body.media;
+  const media_type = req.body.media_type;
+
+  const newMessage = new Group_Message({
+    group_id: group_id,
+    sender_id: sender_id,
+    message_text: message_text,
+    media: media,
+    media_type: media_type,
+    timestamp: new Date()
+  });
+
+  newMessage.save((err, message) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    res.status(201).json(message);
+  });
+});
